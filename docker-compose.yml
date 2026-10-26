@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: drip
+      POSTGRES_PASSWORD: drip
+      POSTGRES_DB: drip_burgers
+    ports:
+      - "5432:5432"
+    volumes:
+      - drip_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drip -d drip_burgers"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://drip:drip@db:5432/drip_burgers?schema=public
+    ports:
+      - "3000:3000"
+    command: sh -c "npx prisma migrate deploy && npm run db:seed && npm start"
+
+volumes:
+  drip_postgres:

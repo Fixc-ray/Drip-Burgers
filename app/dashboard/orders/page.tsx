@@ -1,0 +1,6 @@
+import { getAuthorizedBranches, getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { safeOrder } from "@/lib/orders";
+import { OrdersTable } from "@/components/dashboard/OrdersTable";
+export const dynamic="force-dynamic";
+export default async function OrdersPage(){const user=(await getCurrentUser())!;const branches=await getAuthorizedBranches(user.id,user.role);const orders=await prisma.order.findMany({where:user.role==="ADMIN"?{}:{branchId:{in:branches.map(b=>b.id)}},include:{branch:true},orderBy:{createdAt:"desc"},take:200});const rows=orders.map(o=>{const customer=safeOrder(o);return{id:o.id,orderNumber:o.orderNumber,customerName:customer.customerName,phone:customer.phone,branch:o.branch.name,status:o.status,fulfillmentType:o.fulfillmentType,total:o.total.toString(),createdAt:o.createdAt.toISOString()}});return <div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.2em] text-drip-red">Queue</p><h1 className="mt-2 font-[var(--font-display)] text-4xl uppercase md:text-6xl">Orders</h1><p className="mb-8 mt-3 text-sm text-white/45">Search orders and update fulfilment status. Visibility is limited to your assigned branches.</p><OrdersTable rows={rows}/></div>}

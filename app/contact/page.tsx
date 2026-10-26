@@ -1,0 +1,6 @@
+import type { Metadata } from "next";
+import { Mail, Phone } from "lucide-react";
+import { PublicShell } from "@/components/layout/PublicShell";
+import { LocationCards } from "@/components/locations/LocationCards";
+export const metadata: Metadata = { title: "Contact", description: "Contact or find a Drip Burgers Kenya branch." };
+export default function ContactPage() { return <PublicShell><section className="bg-drip-black px-5 pb-24 pt-36 lg:px-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.3em] text-drip-red">Talk to us</p><h1 className="mt-4 font-[var(--font-display)] text-6xl uppercase leading-[.84] md:text-9xl">Need your drip?</h1><div className="my-12 grid gap-3 md:grid-cols-2"><a href="mailto:hello@dripburgers.example" className="flex items-center gap-4 border border-white/10 p-6"><Mail className="text-drip-red"/><div><span className="block text-xs uppercase tracking-wider text-white/45">Email</span><strong>hello@dripburgers.example</strong></div></a><a href="tel:+254750000100" className="flex items-center gap-4 border border-white/10 p-6"><Phone className="text-drip-red"/><div><span className="block text-xs uppercase tracking-wider text-white/45">General line</span><strong>0750 000 100</strong></div></a></div><LocationCards compact/></div></section></PublicShell>; }

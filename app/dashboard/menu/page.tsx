@@ -1,0 +1,4 @@
+import { prisma } from "@/lib/prisma";
+import { MenuTable } from "@/components/dashboard/MenuTable";
+export const dynamic="force-dynamic";
+export default async function DashboardMenuPage(){const items=await prisma.menuItem.findMany({orderBy:[{category:"asc"},{name:"asc"}]});return <div className="mx-auto max-w-7xl"><p className="text-xs font-black uppercase tracking-[.2em] text-drip-red">Catalogue</p><h1 className="mt-2 font-[var(--font-display)] text-4xl uppercase md:text-6xl">Menu control</h1><p className="mb-8 mt-3 max-w-2xl text-sm text-white/45">This view reads the centralized Prisma menu catalogue used for availability and order pricing. The storefront uses seed service data for fast static rendering; swap that service to the API when you want live admin edits reflected instantly.</p><MenuTable items={items.map(i=>({id:i.id,name:i.name,category:i.category,price:i.price.toString(),active:i.active,bestseller:i.bestseller}))}/></div>}

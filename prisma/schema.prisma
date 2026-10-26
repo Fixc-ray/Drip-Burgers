@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum FulfillmentType {
+  PICKUP
+  DELIVERY
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  passwordHash   String
+  role           Role            @default(CUSTOMER)
+  isActive       Boolean         @default(true)
+  branchAccess   UserBranch[]
+  orders         Order[]
+  refreshTokens  RefreshToken[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Branch {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  name           String
+  address        String
+  phone          String
+  latitude       Decimal?        @db.Decimal(10, 7)
+  longitude      Decimal?        @db.Decimal(10, 7)
+  openingHours   Json
+  designVariant  String
+  heroHeadline   String
+  heroSubheadline String?
+  active         Boolean         @default(true)
+  menuItems      BranchMenuItem[]
+  users          UserBranch[]
+  orders         Order[]
+  promotions     PromotionBranch[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model UserBranch {
+  userId   String
+  branchId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+}
+
+model MenuItem {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  name        String
+  description String
+  category    String
+  price       Decimal          @db.Decimal(10, 2)
+  image       String
+  featured    Boolean          @default(false)
+  bestseller  Boolean          @default(false)
+  spicy       Boolean          @default(false)
+  active      Boolean          @default(true)
+  branches    BranchMenuItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model BranchMenuItem {
+  branchId  String
+  menuItemId String
+  available Boolean  @default(true)
+  branch    Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@id([branchId, menuItemId])
+}
+
+model Promotion {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  image       String
+  startDate   DateTime
+  endDate     DateTime
+  active      Boolean            @default(true)
+  branches    PromotionBranch[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model PromotionBranch {
+  promotionId String
+  branchId    String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  branch      Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, branchId])
+}
+
+model Order {
+  id                    String          @id @default(cuid())
+  orderNumber           String          @unique
+  userId                String?
+  branchId              String
+  status                OrderStatus     @default(PENDING)
+  fulfillmentType       FulfillmentType
+  customerNameEncrypted String
+  phoneEncrypted        String
+  emailEncrypted        String?
+  deliveryAddressEncrypted String?
+  notesEncrypted        String?
+  subtotal              Decimal         @db.Decimal(12, 2)
+  deliveryFee           Decimal         @default(0) @db.Decimal(12, 2)
+  total                 Decimal         @db.Decimal(12, 2)
+  user                   User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  branch                 Branch          @relation(fields: [branchId], references: [id])
+  items                  OrderItem[]
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  @@index([branchId, createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  lineTotal  Decimal  @db.Decimal(12, 2)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  jti       String   @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
